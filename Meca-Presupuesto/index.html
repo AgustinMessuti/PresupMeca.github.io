@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" src="css/style.css">
+    		<script src="js/a076d05399.js"></script>
+	</head>
+<body>
+
+<h1>Meca Presupuestos</h1>
+
+<!--Nombre del cliente-->
+<label class="clienteCSS" for="cliente">Cliente:</label>
+<input type="text" id="cliente">
+
+<!--Cotización Dolar-->
+<label class="clienteCSS">Cotización dolar: 1 U$D = $</label>
+<label id ="dolar"></label><br><br>
+
+
+<!-- Selector de moneda-->
+<select id="mon">
+  <option value="">Seleccionar moneda</option>
+  <option value="ar">Pesos</option>
+  <option value="usd">Dolar</option>
+</select><br><br>
+
+<!--Titulos-->
+<label id="titulo1">Cantidad</label>
+<label id="titulo2">Producto</label>
+<label id="titulo3">Precio Unitario</label><br>
+
+<!--Seleccionardor del Productos-->
+
+<input type="number" id="c" min="0">
+<select id="prod">
+  <option value="">Seleccionar Producto</option>
+  <option value="alf">Alfajor</option>
+  <option value="ch">Chocolate</option>
+  <option value="cc">Chicle</option>
+  <option value="tic">Tic-Tacs</option>
+  <option value="gum">Gomitas</option>
+  <option value="ju">Jugito</option>
+</select>
+<input type="number" style="margin-right: 20px;" id="pu" min="0">
+
+
+<!--Agregar-->
+<button type="button" onclick="agregar()" title="Ingresar Item"><!--<i class="fa fa-cart-plus" style="color:blue"></i>-->+</button><br>
+
+<!--Tabla-->
+<table id="tabla">
+  <tr>
+    <th>Cantidad</th>
+    <th>Producto</th>
+    <th>Precio Unitario</th>
+    <th>Precio $</th>
+    <th>Precio U$D</th>
+  </tr>
+ 
+</table><br>
+
+
+
+<!--Valor de subtotal-->
+<label class="sub">Subtotal</label>&nbsp;
+<label class="precio" type="number" id="subar"></label>
+<label class="precio" type="number" id="subdol"></label><br>
+
+<!--Valor del IVA-->
+<label class="IVA">IVA</label>&nbsp;
+<label class="precio" type="number" id="ivaAR"></label>
+<label class="precio" type="number" id="ivaDOL"></label><br>
+
+<!--Valor Total-->
+<label class="total">Total</label>&nbsp;
+<label class="precio" type="number" id="totAR"></label>
+<label class="precio" type="number" id="totDOL"></label><br>
+
+<!--Valor de coutoas sin interes-->
+<label class="cuota">Valor de Cuota Ahora 12 - Sin Interés</label>&nbsp;
+<label class="Vcuota" type="number" id="SI"></label><br>
+
+<!--Valor de cuotas con interes-->
+<label class="cuota">Valor Ahora 18 - 35% de Interés</label>&nbsp;
+<label class="Vcuota" type="number" id="CI"></label><br><br>
+
+
+<!--Calcular Total-->
+<button type="button" onclick="calct()">Calcular Total</button>
+
+<!--Imprimir Presupuesto-->
+<button type="button" onclick="imp()">Imprimir Presupuesto</button>
+
+
+
+<script>
+
+// Llamado de API dolar
+fetch("https://dolarapi.com/v1/dolares/oficial")
+  .then(response => response.json())
+  .then(data => dolar.innerHTML = data.compra);
+
+
+
+function agregar(){
+    let canti = document.getElementById('c').value;
+    
+    let P = document.getElementById("prod").value;
+    let prod = document.getElementById('prod');
+    var prodtext = prod.options[prod.selectedIndex].text;
+    
+    let pu = document.getElementById('pu').value;
+    let tablita = document.getElementById('tabla');
+	let moneda = document.getElementById('mon').value;
+    let kdolar = document.getElementById('dolar').textContent;
+    let ptar = 0;
+    let ptdol = 0;
+ 
+ if (P == ""){
+	alert('Por favor seleccióne un producto');
+	}
+	if (canti == ""){
+	alert('Por favor introduzca la cantidad del producto mayor a 0');
+	}
+    if (pu == ""){
+	alert('Por favor ingrese el valor unitario del producto mayor a 0');
+	}
+    
+    if (moneda == ""){
+	alert('Por favor seleccione una moneda');
+	}
+    
+ if (P != "" && canti != "" && pu != "" &&  pu != "0" && canti != "0" && moneda != ""){
+
+
+      if (moneda == "usd") {
+          ptdol = canti * pu;
+          ptar = ptdol*kdolar;     
+          }
+
+      else {
+          ptar = canti * pu;
+          ptdol = ptar/kdolar;
+          }
+
+
+
+      const nuevaFila = tablita.insertRow();
+
+      // Insertar celdas en la fila
+      const celdaCantidad = nuevaFila.insertCell(0);
+      const celdaProducto = nuevaFila.insertCell(1);
+      const celdaPU = nuevaFila.insertCell(2);
+      const celdaPTARS = nuevaFila.insertCell(3);
+      const celdaPTDOL = nuevaFila.insertCell(4);
+
+
+      let canti_elim = '<i class="fa fa-trash" onclick="eliml(this.parentNode.parentNode.rowIndex)" style="color:red" title="Presione para eliminar Item"></i>&nbsp;&nbsp;&nbsp;&nbsp;' + canti;
+     
+
+      // Asignar los valores a las celdas
+      celdaCantidad.innerHTML = canti_elim;
+      celdaProducto.innerHTML =  prodtext ;
+      celdaPU.textContent = pu;
+      celdaPTARS.textContent = ptar.toFixed(2);
+      celdaPTDOL.textContent = ptdol.toFixed(2);
+  }
+  calct();    
+}
+
+//Función de eliminar fila
+function eliml(i) {
+	 document.getElementById("tabla").deleteRow(i);
+      calct();
+}
+
+//Función de calculo
+function calct() {
+    let subT = 0;
+    let subV = 0;
+	let tablita = document.getElementById('tabla');
+    let j = tablita.rows.length;
+    let moneda = document.getElementById('mon').value;
+    let kdolar = document.getElementById('dolar').textContent;
+    
+    
+    // Cálculo de precios para cada producto
+    for (let i = 1; i <j; i++) {
+    
+    	let pt = parseFloat(tablita.rows[i].cells[3].textContent);
+        subT += pt;
+        }
+        	
+  //Subtotal
+  if (moneda = "ar"){
+ 	document.getElementById("subar").innerHTML = "$ " + subT.toFixed(2);
+	subV = subT/kdolar
+    document.getElementById("subdol").innerHTML = "U$D " + subV.toFixed(2);
+    }
+  else {
+    document.getElementById("sudol").innerHTML = "U$D " + subT.toFixed(2);
+	subV = subT*kdolar
+    document.getElementById("subar").innerHTML = "$ " + subV.toFixed(2);
+    }
+
+  //Cálculo de IVA
+  if (moneda = "ar"){
+  IVA = subT*0.21
+  document.getElementById("ivaAR").innerHTML = "$ " + IVA.toFixed(2);
+  IVAV = IVA/kdolar;
+  document.getElementById("ivaDOL").innerHTML = "U$D " + IVAV.toFixed(2);
+  }
+  else {
+    IVA = subT*0.21
+    document.getElementById("ivaDOL").innerHTML = "U$D " + IVA.toFixed(2);
+    IVAV = IVA*kdolar;
+    document.getElementById("ivaAR").innerHTML = "$ " + IVAV.toFixed(2);
+    } 
+
+  //Cálculo de Total
+  if (moneda = "ar"){
+  Total = IVA + subT
+  document.getElementById("totAR").innerHTML = "$ " + Total.toFixed(2);
+  TotalV = Total/kdolar
+  document.getElementById("totDOL").innerHTML = "U$D " + TotalV.toFixed(2);
+  }
+  else {
+  Total = IVA + subT
+  document.getElementById("totDOL").innerHTML = "U$D " + Total.toFixed(2);
+  TotalV = Total/kdolar
+  document.getElementById("totAR").innerHTML = "$ " + TotalV.toFixed(2);
+  }
+  
+
+  //Cálculo cuotas sin interes
+
+  SI = Total/12
+  document.getElementById("SI").innerHTML = "$ " + SI.toFixed(2);
+
+  //Cálculo cuotas con 35% de interés
+  CI = (Total*1.35)/18
+  document.getElementById("CI").innerHTML = "$ " + CI.toFixed(2);
+
+}
+
+
+function imp(){ 
+let Cliente = document.getElementById("cliente").value;
+let P = document.getElementById("prod").value;
+
+
+if (Cliente == ""){
+alert('Por favor registre al cliente');
+}
+
+	else { 
+	alert (Cliente + ' realizó una compra exitosa');
+    calct();
+	print();
+    }
+
+}
+
+
+
+</script>
+
+</body>
+</html>
